@@ -42,17 +42,19 @@ object Validator {
 
     val source = {
       val regularColumnsProjection =
-        sourceTableDef.regularColumns.flatMap { colDef =>
-          val alias = renameMap.getOrElse(colDef.columnName, colDef.columnName)
+        sourceTableDef.regularColumns
+          .filter(colDef => !config.skipColumns.contains(colDef.columnName))
+          .flatMap { colDef =>
+            val alias = renameMap.getOrElse(colDef.columnName, colDef.columnName)
 
-          if (sourceSettings.preserveTimestamps)
-            List(
-              ColumnName(colDef.columnName, Some(alias)),
-              WriteTime(colDef.columnName, Some(alias + "_writetime")),
-              TTL(colDef.columnName, Some(alias + "_ttl"))
-            )
-          else List(ColumnName(colDef.columnName, Some(alias)))
-        }
+            if (sourceSettings.preserveTimestamps)
+              List(
+                ColumnName(colDef.columnName, Some(alias)),
+                WriteTime(colDef.columnName, Some(alias + "_writetime")),
+                TTL(colDef.columnName, Some(alias + "_ttl"))
+              )
+            else List(ColumnName(colDef.columnName, Some(alias)))
+          }
 
       val primaryKeyProjection =
         (sourceTableDef.partitionKey ++ sourceTableDef.clusteringColumns)
@@ -74,17 +76,19 @@ object Validator {
 
     val joined = {
       val regularColumnsProjection =
-        sourceTableDef.regularColumns.flatMap { colDef =>
-          val renamedColName = renameMap.getOrElse(colDef.columnName, colDef.columnName)
+        sourceTableDef.regularColumns
+          .filter(colDef => !config.skipColumns.contains(colDef.columnName))
+          .flatMap { colDef =>
+            val renamedColName = renameMap.getOrElse(colDef.columnName, colDef.columnName)
 
-          if (sourceSettings.preserveTimestamps)
-            List(
-              ColumnName(renamedColName),
-              WriteTime(renamedColName, Some(renamedColName + "_writetime")),
-              TTL(renamedColName, Some(renamedColName + "_ttl"))
-            )
-          else List(ColumnName(renamedColName))
-        }
+            if (sourceSettings.preserveTimestamps)
+              List(
+                ColumnName(renamedColName),
+                WriteTime(renamedColName, Some(renamedColName + "_writetime")),
+                TTL(renamedColName, Some(renamedColName + "_ttl"))
+              )
+            else List(ColumnName(renamedColName))
+          }
 
       val primaryKeyProjection =
         (sourceTableDef.partitionKey ++ sourceTableDef.clusteringColumns)

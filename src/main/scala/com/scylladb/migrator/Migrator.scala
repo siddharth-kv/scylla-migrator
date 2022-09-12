@@ -116,6 +116,7 @@ object Migrator {
           writers.Scylla.writeDataframe(
             target,
             migratorConfig.renames,
+            migratorConfig.skipColumns,
             sourceDF.dataFrame,
             sourceDF.timestampColumns,
             tokenRangeAccumulator)
@@ -185,14 +186,10 @@ object Migrator {
     }
   }
 
-  def savepointFilename(path: String): String =
-    s"${path}/savepoint_${System.currentTimeMillis / 1000}.yaml"
-
   def dumpAccumulatorState(config: MigratorConfig,
                            accumulator: TokenRangeAccumulator,
                            reason: String): Unit = {
-    val filename =
-      Paths.get(savepointFilename(config.savepoints.path)).normalize
+
     val rangesToSkip = accumulator.value.get.map(range =>
       (range.range.start.asInstanceOf[Token[_]], range.range.end.asInstanceOf[Token[_]]))
 
@@ -200,10 +197,10 @@ object Migrator {
       skipTokenRanges = config.skipTokenRanges ++ rangesToSkip
     )
 
-    Files.write(filename, modifiedConfig.render.getBytes(StandardCharsets.UTF_8))
-
+    val currentTimestamp = System.currentTimeMillis / 1000
+    log.info(s"Savepoint@${currentTimestamp} : ${modifiedConfig.render}")
     log.info(
-      s"Created a savepoint config at ${filename} due to ${reason}. Ranges added: ${rangesToSkip}")
+      s"Created a savepoint config at ${currentTimestamp} due to ${reason}. Ranges added: ${rangesToSkip}")
   }
 
   def startSavepointSchedule(svc: ScheduledThreadPoolExecutor,

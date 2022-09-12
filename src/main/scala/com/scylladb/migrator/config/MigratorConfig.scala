@@ -7,13 +7,15 @@ import io.circe.syntax._
 import io.circe.yaml.parser
 import io.circe.yaml.syntax._
 import io.circe.{ Decoder, DecodingFailure, Encoder, Error, Json }
+import org.apache.spark.sql.SparkSession
 
 case class MigratorConfig(source: SourceSettings,
                           target: TargetSettings,
                           renames: List[Rename],
                           savepoints: Savepoints,
                           skipTokenRanges: Set[(Token[_], Token[_])],
-                          validation: Validation) {
+                          validation: Validation,
+                          skipColumns: List[String]) {
   def render: String = this.asJson.asYaml.spaces2
 }
 object MigratorConfig {
@@ -36,8 +38,8 @@ object MigratorConfig {
   implicit val migratorConfigDecoder: Decoder[MigratorConfig] = deriveDecoder[MigratorConfig]
   implicit val migratorConfigEncoder: Encoder[MigratorConfig] = deriveEncoder[MigratorConfig]
 
-  def loadFrom(path: String): MigratorConfig = {
-    val configData = scala.io.Source.fromFile(path).mkString
+  def loadFrom(path: String)(implicit spark: SparkSession): MigratorConfig = {
+    val configData = spark.sparkContext.wholeTextFiles(path).collect()(0)._2
 
     parser
       .parse(configData)

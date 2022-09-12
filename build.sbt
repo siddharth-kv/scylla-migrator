@@ -1,5 +1,7 @@
 import sbt.librarymanagement.InclExclRule
 
+credentials += Credentials(new File(sys.env.get("HOME").get + "/.sbt/.credentials"))
+
 lazy val root = (project in file(".")).settings(
   inThisBuild(
     List(
@@ -55,10 +57,7 @@ lazy val root = (project in file(".")).settings(
     false
   },
   resolvers ++= Seq(
-    "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases/",
-    "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
-    "Second Typesafe repo" at "http://repo.typesafe.com/typesafe/maven-releases/",
-    Resolver.sonatypeRepo("public")
+    "Artifactory Release" at "https://zeotap.jfrog.io/zeotap/libs-release"
   ),
   pomIncludeRepository := { x =>
     false

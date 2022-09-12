@@ -195,6 +195,9 @@ renames: []
 # create a savepoint file with this filled.
 skipTokenRanges: []
 
+# Column skipping configuration. Specify the columns to be skipped in the list:
+skipColumns: []
+
 # Configuration section for running the validator. The validator is run manually (see README)
 # and currently only supports comparing a Cassandra source to a Scylla target.
 validation:
